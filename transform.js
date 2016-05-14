@@ -1,21 +1,20 @@
 'use strict';
-
 const fs = require('fs');
-
+module.exports = exports = {};
 const bitmap = {};
 
 // Inverts RGB colors (excluding alpha) & converts to hex
-function invertColors(palette, cb, data) {
+exports.invertColors = function(palette, cb, data) {
   for (var i = 0; i < palette.length; i++){
     if (!(i % 4 === 3)) palette[i] = 256 - palette[i];
     palette[i] = palette[i].toString(16);
   }
   console.log('palette after inversion and hexing', palette)
-  cb(bitmap.colorPaletteRaw, data, writeNewBitmap);
+  cb(bitmap.colorPaletteRaw, data, exports.writeNewBitmap);
 }
 
 // Concatenates buffer strings and converts back to buffer.
-function constructBitmap(palette, data, cb) {
+exports.constructBitmap = function(palette, data, cb) {
   let paletteString = palette.join('');
   let buf = '';
   let bufHeader = data.toString('hex', 0, 54);
@@ -25,8 +24,8 @@ function constructBitmap(palette, data, cb) {
   cb(finalBuffer);
 }
 
-// Constructs and writes new bitmap
-function writeNewBitmap(buffer) {
+// Writes new bitmap buffer
+exports.writeNewBitmap = function(buffer) {
   fs.writeFile(__dirname + '/palette-bitmap-new.bmp', buffer, (err) => {
     if (err) console.log(err);
     console.log('bitmap successful');
@@ -34,7 +33,7 @@ function writeNewBitmap(buffer) {
 }
 
 // Reads bitmap and converts palette to an array of bytes
-function readBitmap(cb) {
+exports.readBitmap = function() {
   fs.readFile(__dirname + '/palette-bitmap.bmp', (err, data) => {
     if (err) console.log(err);
     console.log('headers', data.slice(0, 54));
@@ -48,8 +47,11 @@ function readBitmap(cb) {
     data.toString('hex', 54, 1078).match(/.{1,2}/g).map((hexValue) => {
       return parseInt(hexValue, 16);
     });
-    cb(bitmap.colorPaletteRaw, constructBitmap, data);
+    // cb(bitmap.colorPaletteRaw, exports.constructBitmap, data);
+    console.log(data);
   })
 }
 
-readBitmap(invertColors);
+exports.readBitmap(exports.invertColors);
+
+debugger;
