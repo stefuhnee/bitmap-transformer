@@ -1,35 +1,35 @@
 'use strict';
 
 const fs = require('fs');
-const buf = require('buffer');
-const ee = new (require('events'));
 
 const bitmap = {};
 
-// Inverts RGB colors (excluding alpha)
+// Inverts RGB colors (excluding alpha) & converts to hex
 function invertColors(palette, cb, data) {
   for (var i = 0; i < palette.length; i++){
     if (!(i % 4 === 3)) palette[i] = 256 - palette[i];
+    palette[i] = palette[i].toString(16);
   }
-  // console.log('palette after inversion', palette)
-  cb(bitmap.colorPaletteRaw, data);
+  console.log('palette after inversion and hexing', palette)
+  cb(bitmap.colorPaletteRaw, data, writeNewBitmap);
+}
+
+// Concatenates buffer strings and converts back to buffer.
+function constructBitmap(palette, data, cb) {
+  let paletteString = palette.join('');
+  let buf = '';
+  let bufHeader = data.toString('hex', 0, 54);
+  let bufPixels = data.toString('hex', 1078);
+  buf += bufHeader + paletteString + bufPixels;
+  let finalBuffer = new Buffer(buf, 'hex');
+  cb(finalBuffer);
 }
 
 // Constructs and writes new bitmap
-function writeNewBitmap(palette, data) {
-  let paletteString = palette.join('');
-  // console.log('palette string before converting to buffer', paletteString);
-  // let buf = new Buffer(paletteString)
-  fs.writeFile(__dirname + '/palette-bitmap-new.bmp', buf, (err) => {
+function writeNewBitmap(buffer) {
+  fs.writeFile(__dirname + '/palette-bitmap-new.bmp', buffer, (err) => {
     if (err) console.log(err);
-    let buf = '';
-    let bufHeader = data.slice(0, 54);
-    // let
-    console.log('buf header', bufHeader)
-    let buf = new Buffer(data.toString('ascii', 0, 54))
-    console.log('headers prior to buffer write', buf);
-    buf.write(buf.toString('ascii', 0, 54));
-    // console.log('buf', buf);
+    console.log('bitmap successful');
   })
 }
 
@@ -45,22 +45,11 @@ function readBitmap(cb) {
     bitmap.bitsPerPixel = data.readUInt16LE(28);
     bitmap.colorPaletteNum = data.readUInt32LE(46);
     bitmap.colorPaletteRaw =
-    data.toString('hex', 54, 1078).match(/.{1,2}/g).map((hex) => {
-      return parseInt(hex, 16);
+    data.toString('hex', 54, 1078).match(/.{1,2}/g).map((hexValue) => {
+      return parseInt(hexValue, 16);
     });
-    // console.log(bitmap);
-    cb(bitmap.colorPaletteRaw, writeNewBitmap, data);
+    cb(bitmap.colorPaletteRaw, constructBitmap, data);
   })
 }
 
 readBitmap(invertColors);
-
-debugger;
-
-
-//color palette starts at index 54
-
-// COLOR PALETTE STARTS AT BYTE 54, ends at BYTE 1074
-// 2 hex characters = 1 byte
-// Want to read 4 bytes at a time -- RGBA, each 1 byte.
-// bitmap.colorPalette = data.toString('hex', 54, 1078);
