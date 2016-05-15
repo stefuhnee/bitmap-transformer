@@ -24,6 +24,13 @@ function readBitmap(filepath, done) {
   });
 }
 
+function invertColors(palette) {
+  for (var i = 0; i < palette.length; i++) {
+    if (!(i % 4 === 3)) palette[i] = 255 - palette[i];
+  }
+  return palette;
+};
+
 describe('Bitmap read tests', () => {
   before((done) => {
     readBitmap('/../palette-bitmap.bmp', done);
@@ -39,12 +46,14 @@ describe('Bitmap read tests', () => {
 describe('Bitmap pixel transform tests', () => {
   let sampleArray = [32, 44, 1, 4, 54, 1, 23, 2, 56, 32, 251, 31, 2, 0];
   let transformedArray = [223, 211, 254, 4, 201, 254, 232, 2, 199, 223, 4, 31, 253, 255];
-  let invertColors = function(palette) {
-    for (var i = 0; i < palette.length; i++) {
-      if (!(i % 4 === 3)) palette[i] = 255 - palette[i];
-    }
-    return palette;
-  };
+  before(() => {
+    let invertColors = function(palette) {
+      for (var i = 0; i < palette.length; i++) {
+        if (!(i % 4 === 3)) palette[i] = 255 - palette[i];
+      }
+      return palette;
+    };
+  })
   it('should transform every index but the 4th (alpha) in an array', () => {
     expect(invertColors(sampleArray)).to.eql(transformedArray);
   });
@@ -62,5 +71,13 @@ describe('Transformed bitmap construction tests', () => {
   });
   it('should have a different color palette than the original', () => {
     expect(originalBitmap.colorPaletteRaw).to.not.eql(transformedBitmap.colorPaletteRaw);
+    var checkvalues = [];
+    for (var i = 0; i < 1025; i++) {
+      checkvalues.push(255 + parseInt(transformedBitmap.colorPaletteRaw[i], 16));
+    }
+    console.log('transformed', transformedBitmap.colorPaletteRaw)
   });
 });
+
+//
+// console.log(checkvalues);
