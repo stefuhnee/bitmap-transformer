@@ -4,19 +4,29 @@ const fs = require('fs');
 const mocha = require('mocha');
 const expect = require('chai').expect;
 const transform = require('../transform');
+const bitmap = {};
+const transformedBitmap = {};
+
+function readBitmap(filepath, done) {
+  fs.readFile(__dirname + filepath, (err, data) => {
+    let object = transformedBitmap;
+    if (filepath === '/../palette-bitmap.bmp') object = bitmap;
+    object.buffer = data;
+    object.size = data.readUInt32LE(2);
+    object.start = data.readUInt32LE(10);
+    object.sizeOfHeader = data.readUInt32LE(14);
+    object.completeHeader = data.slice(0, 54);
+    object.bitsPerPixel = data.readUInt16LE(28);
+    object.colorPaletteNum = data.readUInt32LE(46);
+    object.colorPaletteRaw = data.slice(54, 1078);
+    object.pixelData = data.slice(1078);
+    done();
+  });
+}
 
 describe('Bitmap read tests', () => {
-  let bitmap = {};
   before((done) => {
-    fs.readFile(__dirname + '/../palette-bitmap.bmp', (err, data) => {
-      bitmap.buffer = data;
-      bitmap.size = data.readUInt32LE(2);
-      bitmap.start = data.readUInt32LE(10);
-      bitmap.sizeOfHeader = data.readUInt32LE(14);
-      bitmap.bitsPerPixel = data.readUInt16LE(28);
-      bitmap.colorPaletteNum = data.readUInt32LE(46);
-      done();
-    });
+    readBitmap('/../palette-bitmap.bmp', done);
   });
   it('should read the bitmap and return a buffer', () => {
     expect(Buffer.isBuffer(bitmap.buffer)).to.eql(true);
@@ -27,15 +37,31 @@ describe('Bitmap read tests', () => {
 });
 
 describe('Bitmap pixel transform tests', () => {
-  let bitmap = {};
-  bitmap.colorPaletteRaw = [32, 44, 1, 4, 54, 3, 23, 2, 56, 32, 4, 32, 3, 0];
+  let sampleArray = [32, 44, 1, 4, 54, 1, 23, 2, 56, 32, 251, 31, 2, 0];
+  let invertColors = function(palette) {
+    for (var i = 0; i < palette.length; i++) {
+      if (!(i % 4 === 3)) palette[i] = 255 - palette[i];
+    }
+    console.log(palette)
+    return palette;
+  }
+
   it('should transform every index but the 4th (alpha) in an array', () => {
-    expect(transform.invertColors(bitmap)).to.eql([224, 212, 255, 4, 202, 253, 233, 2, 200, 224, 252, 32, 253, 256]);
+    expect(invertColors(sampleArray)).to.eql([223, 211, 254, 4, 201, 254, 232, 2, 199, 223, 4, 31, 253, 255]);
   });
-})
+});
 
-// describe('Bitmap pixel transform tests')
-
-// all parts of the buffer should be the expected length
-// header should be the same between data and the beginning of written buffer array
-// function should alter every number but the 4th in series
+describe('Transformed bitmap construction tests', () => {
+  before((done) => {
+    readBitmap('/../palette-bitmap-new.bmp', done);
+  });
+  it('should have the characteristics that the original buffer headers dictate/be equivalent to the original bitmap beyond the palette', () => {
+    expect(bitmap.size).to.eql(transformedBitmap.size);
+    expect(bitmap.length).to.eql(transformedBitmap.length);
+    expect(bitmap.completeHeader).to.eql(transformedBitmap.completeHeader);
+    expect(bitmap.pixelData).to.eql(transformedBitmap.pixelData);
+  });
+  it('should have a different color palette', () => {
+    expect(bitmap.colorPaletteRaw).to.not.eql(transformedBitmap.colorPaletteRaw);
+  });
+});
