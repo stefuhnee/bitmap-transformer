@@ -3,7 +3,7 @@ const fs = require('fs');
 module.exports = exports = {};
 const bitmap = {};
 
-// Inverts RGB colors (excluding alpha) & creates new palette buffer.
+// Inverts RGB colors (excluding alpha) & creates new tranformed palette buffer.
 exports.invertColors = function(bitmap, cb) {
   let palette = bitmap.colorPaletteRaw;
   let transformedPalette = new Buffer(1024);
@@ -16,7 +16,6 @@ exports.invertColors = function(bitmap, cb) {
     // Handles black not being zero padded
     if (transformedPalette.readUInt8(i) == 15) transformedPalette.writeUInt8('0x' + 'ff', i);
   }
-  console.log('inverted palette', transformedPalette);
   typeof cb === 'function' && cb(bitmap, exports.writeNewBitmap);
 };
 
@@ -24,8 +23,8 @@ exports.invertColors = function(bitmap, cb) {
 exports.constructBitmap = function(bitmap, cb) {
   let rawBuffer = bitmap.rawBuffer;
   let paletteString = bitmap.transformedPalette;
-  let buf = Buffer.concat([rawBuffer.slice(0, 54), paletteString, rawBuffer.slice(1078)], rawBuffer.length);
-  typeof cb === 'function' && cb(buf);
+  let transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), paletteString, rawBuffer.slice(1078)], rawBuffer.length);
+  typeof cb === 'function' && cb(transformedBuffer);
 };
 
 // Writes new bitmap buffer
