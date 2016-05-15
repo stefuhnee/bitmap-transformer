@@ -29,7 +29,7 @@ function invertColors(palette) {
     if (!(i % 4 === 3)) palette[i] = 255 - palette[i];
   }
   return palette;
-};
+}
 
 describe('Bitmap read tests', () => {
   before((done) => {
@@ -53,7 +53,7 @@ describe('Bitmap pixel transform tests', () => {
       }
       return palette;
     };
-  })
+  });
   it('should transform every index but the 4th (alpha) in an array', () => {
     expect(invertColors(sampleArray)).to.eql(transformedArray);
   });
@@ -75,7 +75,7 @@ describe('Transformed bitmap construction tests', () => {
     for (var i = 0; i < 1025; i++) {
       checkvalues.push(255 + parseInt(transformedBitmap.colorPaletteRaw[i], 16));
     }
-    console.log('transformed', transformedBitmap.colorPaletteRaw)
+    console.log('transformed', transformedBitmap.colorPaletteRaw);
   });
 });
 
