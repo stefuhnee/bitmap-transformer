@@ -71,13 +71,17 @@ describe('Transformed bitmap construction tests', () => {
   });
   it('should have a different color palette than the original', () => {
     expect(originalBitmap.colorPaletteRaw).to.not.eql(transformedBitmap.colorPaletteRaw);
-    var checkvalues = [];
-    for (var i = 0; i < 1025; i++) {
-      checkvalues.push(255 + parseInt(transformedBitmap.colorPaletteRaw[i], 16));
+  });
+  it('should have the same color palette as the original when the inversion is reversed', () => {
+    let reinvertedBytes = new Buffer(1024);
+    let originalBytes = new Buffer(1024);
+    // Reversing the inversion by calling the inversion function a second time
+    let reinvertedPalette = transform.invertColors(transformedBitmap, null);
+    let originalPalette = originalBitmap.colorPaletteRaw;
+    for (var i = 0; i < reinvertedPalette.length; i++) {
+      originalBytes.writeUInt8('0x' + originalPalette.readUInt8(i).toString(16), i);
+      reinvertedBytes.writeUInt8('0x' + reinvertedPalette.readUInt8(i).toString(16), i);
     }
-    console.log('transformed', transformedBitmap.colorPaletteRaw);
+    expect(originalBytes).to.eql(reinvertedBytes);
   });
 });
-
-//
-// console.log(checkvalues);
