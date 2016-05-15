@@ -24,7 +24,7 @@ exports.constructBitmap = function(bitmap, cb) {
 // Writes new bitmap buffer
 exports.writeNewBitmap = function(buffer) {
   fs.writeFile(__dirname + '/palette-bitmap-new.bmp', buffer, (err) => {
-    if (err) console.log(err);
+    if (err) throw err;
     console.log('bitmap transformed');
   });
   return buffer;
@@ -33,24 +33,17 @@ exports.writeNewBitmap = function(buffer) {
 // Reads bitmap and converts palette to an array of bytes
 exports.readBitmap = function(cb) {
   fs.readFile(__dirname + '/palette-bitmap.bmp', (err, data) => {
-    if (err) console.log(err);
+    if (err) throw err;
     bitmap.type = data.toString('ascii', 0, 2);
     bitmap.size = data.readUInt32LE(2);
     bitmap.start = data.readUInt32LE(10);
     bitmap.sizeOfHeader = data.readUInt32LE(14);
     bitmap.bitsPerPixel = data.readUInt16LE(28);
     bitmap.colorPaletteNum = data.readUInt32LE(46);
-    bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078), 'hex'));
-    console.log('raw color palette', bitmap.colorPaletteRaw);
-    // bitmap.colorPaletteRaw =
-    // data.toString('hex', 54, 1078).match(/.{1,2}/g).map((hexByte) => {
-    //   return parseInt(hexByte, 16);
-    // });
+    bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078)));
     bitmap.rawBuffer = data;
     typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
   });
 };
 
 exports.readBitmap(exports.invertColors);
-
-debugger;
