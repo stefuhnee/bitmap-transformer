@@ -17,23 +17,24 @@ function findInverse(hexByte) {
   return invertedByte;
 }
 
-// Inverts RGB colors (excluding alpha) & converts to hex
+// Inverts RGB colors (excluding alpha) & creates new palette buffer.
 exports.invertColors = function(bitmap, cb) {
   let palette = bitmap.colorPaletteRaw;
   let transformedPalette = new Buffer(1024);
   bitmap.transformedPalette = transformedPalette;
-  console.log(transformedPalette);
   for (var i = 0; i < palette.length; i++) {
     if (!(i % 4 === 3)) {
       let currentHex = palette.readUInt8(i).toString(16);
       transformedPalette.writeUInt8('0x' + findInverse(currentHex), i);
+      // Handles black not being zero padded within the buffer
+      if (transformedPalette.readUInt8(i) == 15) transformedPalette.writeUInt8('0x' + 'ff', i);
     }
   }
-  console.log('inverted palette', palette)
+  console.log('inverted palette', transformedPalette)
   typeof cb === 'function' && cb(bitmap, exports.writeNewBitmap);
 };
 
-// Concatenates buffer strings and converts back to buffer.
+// Concatenates buffer strings to reconstruct final bitmap buffer
 exports.constructBitmap = function(bitmap, cb) {
   let rawBuffer = bitmap.rawBuffer;
   let paletteString = bitmap.transformedPalette;
@@ -62,7 +63,6 @@ exports.readBitmap = function(cb) {
     bitmap.colorPaletteNum = data.readUInt32LE(46);
     bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078)));
     bitmap.rawBuffer = data;
-    console.log('original palette', bitmap.colorPaletteRaw);
     typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
   });
 };
