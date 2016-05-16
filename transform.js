@@ -6,7 +6,7 @@ const bitmap = {};
 // Inverts RGB colors (excluding alpha) & creates new transformed palette buffer.
 exports.invertColors = function(bitmap, cb) {
   let palette = bitmap.colorPaletteRaw;
-  let transformedPalette = new Buffer(1024);
+  let transformedPalette = new Buffer(palette.length);
   let currentHex;
   bitmap.transformedPalette = transformedPalette;
   for (var i = 0; i < palette.length; i++) {
@@ -49,6 +49,7 @@ exports.readBitmap = function(cb) {
     bitmap.colorPaletteNum = data.readUInt32LE(46);
     bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078)));
     bitmap.rawBuffer = data;
+    console.log('bitmap', bitmap)
     typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
   });
 };
