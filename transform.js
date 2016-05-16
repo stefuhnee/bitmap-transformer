@@ -65,8 +65,10 @@ exports.readBitmap = function(cb, file) {
       bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078)));
     }
     bitmap.rawBuffer = data;
-    typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
+    if (cb === 'done') cb(done);
+    else cb(bitmap, exports.constructBitmap);
   });
+  return bitmap;
 };
 
-exports.readBitmap(exports.invertColors, '/palette-bitmap.bmp');
+exports.readBitmap(exports.invertColors, '/' + process.argv[2] + '-bitmap.bmp');

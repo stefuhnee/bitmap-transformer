@@ -7,26 +7,26 @@ const transform = require('../transform');
 const originalBitmap = {};
 const transformedBitmap = {};
 
-function readBitmap(filepath, done) {
-  fs.readFile(__dirname + filepath, (err, data) => {
-    let bitmap = originalBitmap;
-    if (filepath === '/../bitmap-new.bmp') bitmap = transformedBitmap;
-    bitmap.buffer = data;
-    bitmap.size = data.readUInt32LE(2);
-    bitmap.start = data.readUInt32LE(10);
-    bitmap.sizeOfHeader = data.readUInt32LE(14);
-    bitmap.completeHeader = data.slice(0, 54);
-    bitmap.bitsPerPixel = data.readUInt16LE(28);
-    bitmap.colorPaletteNum = data.readUInt32LE(46);
-    bitmap.type = 'nonPalette';
-    bitmap.pixelData = data.slice(bitmap.start);
-    bitmap.colorPaletteRaw = data.slice(54, bitmap.start);
-    if (bitmap.colorPaletteNum) {
-      bitmap.type = 'palette';
-    }
-    done();
-  });
-}
+// function readBitmap(filepath, done) {
+//   fs.readFile(__dirname + filepath, (err, data) => {
+//     let bitmap = originalBitmap;
+//     if (filepath === '/../bitmap-new.bmp') bitmap = transformedBitmap;
+//     bitmap.buffer = data;
+//     bitmap.size = data.readUInt32LE(2);
+//     bitmap.start = data.readUInt32LE(10);
+//     bitmap.sizeOfHeader = data.readUInt32LE(14);
+//     bitmap.completeHeader = data.slice(0, 54);
+//     bitmap.bitsPerPixel = data.readUInt16LE(28);
+//     bitmap.colorPaletteNum = data.readUInt32LE(46);
+//     bitmap.type = 'nonPalette';
+//     bitmap.pixelData = data.slice(bitmap.start);
+//     bitmap.colorPaletteRaw = data.slice(54, bitmap.start);
+//     if (bitmap.colorPaletteNum) {
+//       bitmap.type = 'palette';
+//     }
+//     done();
+//   });
+// }
 
 function invertColors(palette) {
   for (var i = 0; i < palette.length; i++) {
@@ -37,7 +37,8 @@ function invertColors(palette) {
 
 describe('Bitmap read tests', () => {
   before((done) => {
-    readBitmap('/../non-palette-bitmap.bmp', done);
+    process.argv = ['node', 'Users/Stefanie/cf/401/class-01/stefanie-hansen/greet.js', 'palette'];
+    originalBitmap = transform.readBitmap(done, '/' + process.argv[2] + '-bitmap.bmp');
   });
   it('should read the bitmap and return a buffer', () => {
     expect(Buffer.isBuffer(originalBitmap.buffer)).to.eql(true);
@@ -65,7 +66,7 @@ describe('Bitmap pixel transform tests', () => {
 
 describe('Transformed bitmap construction tests', () => {
   before((done) => {
-    readBitmap('/../bitmap-new.bmp', done);
+    transformedBitmap = transform.readBitmap(done, '/bitmap-new.bmp');
   });
   it('should have the characteristics that the original buffer headers dictate/be equivalent to the original bitmap beyond the palette', () => {
     expect(originalBitmap.size).to.eql(transformedBitmap.size);
