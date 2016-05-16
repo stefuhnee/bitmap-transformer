@@ -65,8 +65,9 @@ exports.readBitmap = function(cb, file) {
       bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078)));
     }
     bitmap.rawBuffer = data;
-    if (cb === 'done') cb(done);
-    else cb(bitmap, exports.constructBitmap);
+    // if (cb === 'done') cb(done);
+    typeof cb === 'function' && cb(exports.constructBitmap);
+    // else cb(bitmap, exports.constructBitmap);
   });
   return bitmap;
 };
