@@ -58,7 +58,6 @@ exports.readBitmap = function(cb, file) {
     bitmap.size = data.readUInt32LE(2);
     bitmap.start = data.readUInt32LE(10);
     bitmap.sizeOfHeader = data.readUInt32LE(14);
-    bitmap.bitsPerPixel = data.readUInt16LE(28);
     bitmap.colorPaletteNum = data.readUInt32LE(46);
     bitmap.type = 'nonPalette';
     if (bitmap.colorPaletteNum) {
@@ -66,9 +65,8 @@ exports.readBitmap = function(cb, file) {
       bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078)));
     }
     bitmap.rawBuffer = data;
-    console.log('bitmap', bitmap);
     typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
   });
 };
 
-exports.readBitmap(exports.invertColors, '/non-palette-bitmap.bmp');
+exports.readBitmap(exports.invertColors, '/palette-bitmap.bmp');
