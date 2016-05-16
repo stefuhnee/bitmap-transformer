@@ -1,6 +1,5 @@
 'use strict';
 const fs = require('fs');
-module.exports = exports = {};
 const bitmap = {};
 
 // Inverts RGB colors (excluding alpha) & creates new transformed palette buffer.
@@ -62,11 +61,11 @@ exports.readBitmap = function(cb, file) {
     bitmap.type = 'nonPalette';
     if (bitmap.colorPaletteNum) {
       bitmap.type = 'palette';
-      bitmap.colorPaletteRaw = (new Buffer(data.slice(54, 1078)));
+      bitmap.colorPaletteRaw = data.slice(54, 1078);
     }
     bitmap.rawBuffer = data;
     typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
   });
 };
 
-exports.readBitmap(exports.invertColors, '/palette-bitmap.bmp');
+exports.readBitmap(exports.invertColors, '/' + process.argv[2] + '-bitmap.bmp');

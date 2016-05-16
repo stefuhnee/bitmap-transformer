@@ -6,6 +6,7 @@ const expect = require('chai').expect;
 const transform = require('../transform');
 const originalBitmap = {};
 const transformedBitmap = {};
+// mock out headers/buffer for testing
 
 function readBitmap(filepath, done) {
   fs.readFile(__dirname + filepath, (err, data) => {
