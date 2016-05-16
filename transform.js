@@ -5,39 +5,35 @@ const bitmap = {};
 
 // Inverts RGB colors (excluding alpha) & creates new transformed palette buffer.
 exports.invertColors = function(bitmap, cb) {
+  let type = bitmap.type;
   let currentHex;
-  if (bitmap.type === 'palette') {
-    let palette = bitmap.colorPaletteRaw;
-    let transformed = new Buffer(palette.length);
-    bitmap.transformed = transformed;
-    for (var i = 0; i < palette.length; i++) {
-      currentHex = palette.readUInt8(i);
-      if (!(i % 4 === 3)) currentHex = (255 - currentHex).toString(16);
-      transformed.writeUInt8('0x' + currentHex, i);
-      // Handles black not being zero padded
-      if (transformed.readUInt8(i) == 15) transformed.writeUInt8('0x' + 'ff', i);
-    }
-    typeof cb === 'function' && cb(bitmap, exports.writeNewBitmap);
-    return transformed;
-  }
-  let pixels = bitmap.rawBuffer.slice(54);
-  let transformed = new Buffer(pixels.length);
+  let originalBuffer = bitmap.rawBuffer.slice(54);
+  if (type === 'palette') originalBuffer = bitmap.colorPaletteRaw;
+  let transformed = new Buffer(originalBuffer.length);
   bitmap.transformed = transformed;
-  for (var i = 0; i < pixels.length; i++) {
-    currentHex = 255 - pixels.readUInt8(i);
-    currentHex = currentHex.toString(16);
+  for (var i = 0; i < originalBuffer.length; i++) {
+    currentHex = originalBuffer.readUInt8(i);
+    if (!(i % 4 === 3) && type === 'palette') {
+      currentHex = (255 - currentHex).toString(16);
+    }
+    if (type === 'nonPalette') {
+      currentHex = (255 - currentHex).toString(16);
+    }
     transformed.writeUInt8('0x' + currentHex, i);
     // Handles black not being zero padded
-    if (transformed.readUInt8(i) == 15) transformed.writeUInt8('0x' + 'ff', i);
+    if (transformed.readUInt8(i) == 15) {
+      transformed.writeUInt8('0x' + 'ff', i);
+    }
   }
   typeof cb === 'function' && cb(bitmap, exports.writeNewBitmap);
   return transformed;
 };
 
+
 // Concatenates buffer strings to reconstruct final bitmap buffer
 exports.constructBitmap = function(bitmap, cb) {
   let rawBuffer = bitmap.rawBuffer;
-  let transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), bitmap.transformed]);
+  let transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), bitmap.transformed], rawBuffer.length);
   if (bitmap.type === 'palette') {
     let paletteString = bitmap.transformed;
     let transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), paletteString, rawBuffer.slice(1078)], rawBuffer.length);
@@ -74,4 +70,4 @@ exports.readBitmap = function(cb, file) {
   });
 };
 
-exports.readBitmap(exports.invertColors, '/non-palette-bitmap.bmp');
+exports.readBitmap(exports.invertColors, '/palette-bitmap.bmp');
