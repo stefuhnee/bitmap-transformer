@@ -33,10 +33,12 @@ exports.invertColors = function(bitmap, cb) {
 // Concatenates buffer strings to reconstruct final bitmap buffer
 exports.constructBitmap = function(bitmap, cb) {
   let rawBuffer = bitmap.rawBuffer;
-  let transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), bitmap.transformed], rawBuffer.length);
+  let transformedBuffer;
+  let transformed = bitmap.transformed;
   if (bitmap.type === 'palette') {
-    let paletteString = bitmap.transformed;
-    let transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), paletteString, rawBuffer.slice(1078)], rawBuffer.length);
+    transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), transformed, rawBuffer.slice(1078)], rawBuffer.length);
+  } else {
+    transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), bitmap.transformed], rawBuffer.length);
   }
   typeof cb === 'function' && cb(transformedBuffer);
 };
@@ -70,4 +72,4 @@ exports.readBitmap = function(cb, file) {
   });
 };
 
-exports.readBitmap(exports.invertColors, '/palette-bitmap.bmp');
+exports.readBitmap(exports.invertColors, '/non-palette-bitmap.bmp');
