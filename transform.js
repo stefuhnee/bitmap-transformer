@@ -29,7 +29,6 @@ exports.invertColors = function(bitmap, cb) {
   return transformed;
 };
 
-
 // Concatenates buffer strings to reconstruct final bitmap buffer
 exports.constructBitmap = function(bitmap, cb) {
   let rawBuffer = bitmap.rawBuffer;

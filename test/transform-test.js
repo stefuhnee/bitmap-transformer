@@ -9,8 +9,8 @@ const transformedBitmap = {};
 
 function readBitmap(filepath, done) {
   fs.readFile(__dirname + filepath, (err, data) => {
-    let bitmap = transformedBitmap;
-    if (filepath === '/../palette-bitmap.bmp') bitmap = originalBitmap;
+    let bitmap = originalBitmap;
+    if (filepath === '/../bitmap-new.bmp') bitmap = transformedBitmap;
     bitmap.buffer = data;
     bitmap.size = data.readUInt32LE(2);
     bitmap.start = data.readUInt32LE(10);
@@ -18,8 +18,12 @@ function readBitmap(filepath, done) {
     bitmap.completeHeader = data.slice(0, 54);
     bitmap.bitsPerPixel = data.readUInt16LE(28);
     bitmap.colorPaletteNum = data.readUInt32LE(46);
-    bitmap.colorPaletteRaw = data.slice(54, 1078);
-    bitmap.pixelData = data.slice(1078);
+    bitmap.type = 'nonPalette';
+    bitmap.pixelData = data.slice(bitmap.start);
+    bitmap.colorPaletteRaw = data.slice(54, bitmap.start);
+    if (bitmap.colorPaletteNum) {
+      bitmap.type = 'palette';
+    }
     done();
   });
 }
@@ -33,7 +37,7 @@ function invertColors(palette) {
 
 describe('Bitmap read tests', () => {
   before((done) => {
-    readBitmap('/../palette-bitmap.bmp', done);
+    readBitmap('/../non-palette-bitmap.bmp', done);
   });
   it('should read the bitmap and return a buffer', () => {
     expect(Buffer.isBuffer(originalBitmap.buffer)).to.eql(true);
@@ -61,27 +65,36 @@ describe('Bitmap pixel transform tests', () => {
 
 describe('Transformed bitmap construction tests', () => {
   before((done) => {
-    readBitmap('/../palette-bitmap-new.bmp', done);
+    readBitmap('/../bitmap-new.bmp', done);
   });
   it('should have the characteristics that the original buffer headers dictate/be equivalent to the original bitmap beyond the palette', () => {
     expect(originalBitmap.size).to.eql(transformedBitmap.size);
-    expect(originalBitmap.length).to.eql(transformedBitmap.length);
     expect(originalBitmap.completeHeader).to.eql(transformedBitmap.completeHeader);
-    expect(originalBitmap.pixelData).to.eql(transformedBitmap.pixelData);
-  });
-  it('should have a different color palette than the original', () => {
-    expect(originalBitmap.colorPaletteRaw).to.not.eql(transformedBitmap.colorPaletteRaw);
-  });
-  it('should have the same color palette as the original when the inversion is reversed', () => {
-    let reinvertedBytes = new Buffer(1024);
-    let originalBytes = new Buffer(1024);
-    // Reversing the inversion by calling the inversion function a second time
-    let reinvertedPalette = transform.invertColors(transformedBitmap, null);
-    let originalPalette = originalBitmap.colorPaletteRaw;
-    for (var i = 0; i < reinvertedPalette.length; i++) {
-      originalBytes.writeUInt8('0x' + originalPalette.readUInt8(i).toString(16), i);
-      reinvertedBytes.writeUInt8('0x' + reinvertedPalette.readUInt8(i).toString(16), i);
+    if (originalBitmap.type === 'palette') {
+      expect(originalBitmap.pixelData).to.eql(transformedBitmap.pixelData);
+    } else {
+      expect(originalBitmap.pixelData).to.not.eql(transformedBitmap.pixelData);
     }
-    expect(originalBytes).to.eql(reinvertedBytes);
   });
+  it('should have a different relevant section (palette or pixel data) than the original', () => {
+    if (originalBitmap.type === 'palette') {
+      expect(originalBitmap.colorPaletteRaw).to.not.eql(transformedBitmap.colorPaletteRaw);
+    } else {
+      expect(originalBitmap.pixelData).to.not.eql(transformedBitmap.pixelData);
+    }
+  });
+  if (originalBitmap.type === 'palette') {
+    it('should have the same color palette as the original when the inversion is reversed', () => {
+      let reinvertedBytes = new Buffer(originalBitmap.start - 54);
+      let originalBytes = new Buffer(originalBitmap.start - 54);
+      // Reversing the inversion by calling the inversion function a second time
+      let reinvertedPalette = transform.invertColors(transformedBitmap, null);
+      let originalPalette = originalBitmap.colorPaletteRaw;
+      for (var i = 0; i < reinvertedPalette.length; i++) {
+        originalBytes.writeUInt8('0x' + originalPalette.readUInt8(i).toString(16), i);
+        reinvertedBytes.writeUInt8('0x' + reinvertedPalette.readUInt8(i).toString(16), i);
+      }
+      expect(originalBytes).to.eql(reinvertedBytes);
+    });
+  }
 });
