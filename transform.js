@@ -64,5 +64,5 @@ exports.writeNewBitmap = function(buffer) {
   return buffer;
 };
 
-// Can change to palette-bitmap.bmp to non-palette-bitmap.bmp
+// Can switch between palette-bitmap.bmp & non-palette-bitmap.bmp
 exports.readBitmap(exports.invertColors, '/palette-bitmap.bmp');
