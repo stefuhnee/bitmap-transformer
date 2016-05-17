@@ -3,6 +3,24 @@
 const fs = require('fs');
 const bitmap = {};
 
+// Reads bitmap and converts palette to an array of bytes
+exports.readBitmap = function(cb, file) {
+  fs.readFile(__dirname + file, (err, data) => {
+    if (err) throw err;
+    bitmap.size = data.readUInt32LE(2);
+    bitmap.start = data.readUInt32LE(10);
+    bitmap.sizeOfHeader = data.readUInt32LE(14);
+    bitmap.colorPaletteNum = data.readUInt32LE(46);
+    bitmap.type = 'nonPalette';
+    if (bitmap.colorPaletteNum) {
+      bitmap.type = 'palette';
+      bitmap.colorPaletteRaw = data.slice(54, 1078);
+    }
+    bitmap.rawBuffer = data;
+    typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
+  });
+};
+
 // Inverts RGB colors (excluding alpha) & creates new transformed palette buffer.
 exports.invertColors = function(bitmap, cb) {
   let type = bitmap.type;
@@ -22,7 +40,6 @@ exports.invertColors = function(bitmap, cb) {
     }
   }
   typeof cb === 'function' && cb(bitmap, exports.writeNewBitmap);
-  return transformed;
 };
 
 // Concatenates buffer strings to reconstruct final bitmap buffer
@@ -45,24 +62,6 @@ exports.writeNewBitmap = function(buffer) {
     console.log('bitmap transformed');
   });
   return buffer;
-};
-
-// Reads bitmap and converts palette to an array of bytes
-exports.readBitmap = function(cb, file) {
-  fs.readFile(__dirname + file, (err, data) => {
-    if (err) throw err;
-    bitmap.size = data.readUInt32LE(2);
-    bitmap.start = data.readUInt32LE(10);
-    bitmap.sizeOfHeader = data.readUInt32LE(14);
-    bitmap.colorPaletteNum = data.readUInt32LE(46);
-    bitmap.type = 'nonPalette';
-    if (bitmap.colorPaletteNum) {
-      bitmap.type = 'palette';
-      bitmap.colorPaletteRaw = data.slice(54, 1078);
-    }
-    bitmap.rawBuffer = data;
-    typeof cb === 'function' && cb(bitmap, exports.constructBitmap);
-  });
 };
 
 // Can change to palette-bitmap.bmp to non-palette-bitmap.bmp
