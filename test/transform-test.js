@@ -26,7 +26,6 @@ function readBitmap(filepath, done) {
       bitmap.type = 'palette';
     }
     done();
-    return bitmap;
   });
 }
 
@@ -39,10 +38,11 @@ function invertColors(palette) {
 
 describe('Bitmap read tests', () => {
   before((done) => {
-    readBitmap('/../non-palette-bitmap.bmp', done);
+    // Change between palette-bitmap and non-palette-bitmap depending on the output that you're comparing
+    readBitmap('/../palette-bitmap.bmp', done);
   });
-  it('should read the bitmap and return an object', () => {
-    expect(typeof readBitmap(new Buffer())).to.eql('object');
+  it('should read the bitmap and return a buffer', () => {
+    expect(Buffer.isBuffer(originalBitmap.buffer)).to.eql(true);
   });
   it('should have a size that corresponds to header information given about pixel data start position and overall size', () => {
     expect(originalBitmap.size - originalBitmap.start).to.eql(originalBitmap.buffer.slice(originalBitmap.start).length);

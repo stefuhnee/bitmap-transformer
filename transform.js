@@ -7,20 +7,18 @@ const bitmap = {};
 exports.invertColors = function(bitmap, cb) {
   let type = bitmap.type;
   let currentHex;
-  let originalBuffer = bitmap.originalBuffer = bitmap.rawBuffer.slice(54);
+  let originalBuffer = bitmap.rawBuffer.slice(54);
   if (type === 'palette') originalBuffer = bitmap.colorPaletteRaw;
+  let transformed = bitmap.transformed = new Buffer(originalBuffer.length);
   for (var i = 0; i < originalBuffer.length; i++) {
-    originalBuffer.writeUInt8('0x' + currentHex, i);
+    currentHex = originalBuffer.readUInt8(i);
     if (!(i % 4 === 3) && type === 'palette' || type === 'nonPalette') {
-      originalBuffer.writeUInt8('0x', 255 - currentHex).toString(16);
+      currentHex = (255 - currentHex).toString(16);
     }
-    // if (type === 'nonPalette') {
-    //   currentHex = (255 - currentHex).toString(16);
-    // }
-    // transformed.writeUInt8('0x' + currentHex, i);
+    transformed.writeUInt8('0x' + currentHex, i);
     // Handles black not being zero padded
-    if (originalBuffer.readUInt8(i) == 15) {
-      originalBuffer.writeUInt8('0x' + 'ff', i);
+    if (transformed.readUInt8(i) == 15) {
+      transformed.writeUInt8('0x' + 'ff', i);
     }
   }
   typeof cb === 'function' && cb(bitmap, exports.writeNewBitmap);
@@ -31,7 +29,7 @@ exports.invertColors = function(bitmap, cb) {
 exports.constructBitmap = function(bitmap, cb) {
   let rawBuffer = bitmap.rawBuffer;
   let transformedBuffer;
-  let transformed = bitmap.originalBuffer;
+  let transformed = bitmap.transformed;
   if (bitmap.type === 'palette') {
     transformedBuffer = Buffer.concat([rawBuffer.slice(0, 54), transformed, rawBuffer.slice(1078)], rawBuffer.length);
   } else {
